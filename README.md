@@ -16,4 +16,4 @@ Para instalar las dependencias en un entorno como un cluster ejecuta el siguient
 pip install -r requirements.txt
 
 Para ejecutar el algoritmo con los datos de prueba reducidos
-python src/main.py --matrix_file datos/matrix_reduced.mtx --barcodes_file datos/barcodes_reduced.tsv --genes_file datos/genes_reduced.tsv
+python src/main.py --matrix_file datos/matrix_reduced.mtx --barcodes_file datos/barcodes_reduced.tsv --genes_file datos/genes.tsv
