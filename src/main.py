@@ -5,6 +5,10 @@ import pandas as pd
 from scipy.io import mmread, mmwrite
 import scipy.sparse as sp
 from sklearn.preprocessing import normalize
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+
 
 # --- 1. Leer datos
 #Leer y convertir en matriz dispersa archivo matrix_file
@@ -46,7 +50,7 @@ def explore_data(matrix, barcodes, genes):
     print("\nEjemplo de genes:")
     print(genes.head())
 
-# --- 3. Filtrar y normalizar
+# --- 3. Filtrar 
 # Filtrado: Se eliminan genes expresados en pocas células y células con baja cantidad de genes expresados
 
 def filter_data(matrix, barcodes, genes):
@@ -84,7 +88,7 @@ def filter_data(matrix, barcodes, genes):
     return filtered_matrix, filtered_barcodes, filtered_genes
 
 
-
+#---4. Normalizar
 def normalize_data(matrix, scale_factor=10000):
     """
     Normaliza la matriz de expresión génica usando normalización por tamaño de biblioteca
@@ -194,10 +198,85 @@ def process_normalized_data(filtered_matrix, filtered_genes, n_top_genes=2000):
 
 
 
+#---5. Analisis de componentes principales
+def apply_pca(hvg_matrix, n_components=2):#TODO: Definir cuanto componentes, se lo ha dejado a solo 2
+    """
+    Aplica PCA para reducir la dimensionalidad de los datos.
+
+    Args:
+        hvg_matrix: matriz con los genes altamente variables
+        n_components: número de componentes principales a mantener
+    
+    Returns:
+        pca_result: matriz con los datos en el espacio reducido de PCA
+    """
+    # Convertir a matriz densa para PCA
+    dense_matrix = hvg_matrix.toarray()
+    
+    # Aplicar PCA
+    pca = PCA(n_components=n_components)
+    pca_result = pca.fit_transform(dense_matrix.T)  # Transpuesta para que sea células x genes
+    
+    print(f"PCA completado. Dimensiones del resultado de PCA: {pca_result.shape}")
+    return pca_result
+
+
+
+
+#---6. Clustering
+def perform_clustering(data, n_clusters=10):
+    """
+    Aplica KMeans para agrupar las células en función de sus perfiles de expresión génica.
+
+    Args:
+        data: matriz de datos reducidos (ej. resultado de PCA)
+        n_clusters: número de clusters
+    
+    Returns:
+        labels: etiquetas de cluster para cada célula
+    """
+    kmeans = KMeans(n_clusters=n_clusters, random_state=0)
+    labels = kmeans.fit_predict(data)
+    
+    print(f"KMeans completado. Número de clusters: {n_clusters}")
+    return labels
+
+
+#--- 7. Visualizacion
+def plot_pca(pca_result):
+    """Visualiza los resultados de PCA en un gráfico de dispersión."""
+    plt.figure(figsize=(10, 8))
+    plt.scatter(pca_result[:, 0], pca_result[:, 1], s=10, color='blue', alpha=0.6)
+    plt.title("Visualización de PCA")
+    plt.xlabel("Componente principal 1")
+    plt.ylabel("Componente principal 2")
+    #plt.show()
+    plt.savefig("pca_result.png")
+
+def plot_clusters(pca_result, cluster_labels):
+    """Visualiza los clusters en el espacio PCA."""
+    plt.figure(figsize=(10, 8))
+    unique_clusters = set(cluster_labels)
+    colors = plt.cm.get_cmap("rainbow", len(unique_clusters))  # Colores distintos para cada cluster
+    
+    for cluster in unique_clusters:
+        mask = cluster_labels == cluster
+        plt.scatter(pca_result[mask, 0], pca_result[mask, 1], s=10, 
+                    color=colors(cluster), label=f'Cluster {cluster}', alpha=0.6)
+    
+    plt.title("Clustering en el espacio PCA")
+    plt.xlabel("Componente principal 1")
+    plt.ylabel("Componente principal 2")
+    plt.legend()
+    #plt.show()
+    plt.savefig("clusters_result.png")
+
+
+
+
+
 #función principal
 def main(matrix_file, barcodes_file, genes_file):
-    # print(f"Procesando {matrix_file}, {barcodes_file}, {genes_file}")
-    # print("Los datos se han cargado")
 
     # Cargar los datos
     matrix = load_matrix(matrix_file)
@@ -223,12 +302,20 @@ def main(matrix_file, barcodes_file, genes_file):
     # mmwrite('normalized_matrix.mtx', normalized_matrix)
     # hvg_genes.to_csv('highly_variable_genes.csv')
     # gene_stats.to_csv('normalizacion/gene_statistics.csv')
+    
+    print("\nReduciendo dimensionalidad con PCA...")
+    pca_result = apply_pca(hvg_matrix)#Envio la matriz solo con los altamente variables
+    print("PCA realizado. Visualizando resultados...")
+    # Visualización de PCA
+    plot_pca(pca_result)
 
+    print("\nRealizando clustering con KMeans...")
+    cluster_labels = perform_clustering(pca_result, n_clusters=10)
+    print("Clustering realizado. Visualizando clusters...")
+     # Visualización de Clustering
+    plot_clusters(pca_result, cluster_labels)
 
-
-
-
-
+    
 
 
 
@@ -241,6 +328,7 @@ if __name__ == "__main__":
     parser.add_argument("--matrix_file", required=True, help="Ruta del archivo matrix.mtx")
     parser.add_argument("--barcodes_file", required=True, help="Ruta del archivo barcodes.tsv")
     parser.add_argument("--genes_file", required=True, help="Ruta del archivo genes.tsv")
+    #parser.add_argument("--n_clusters", required=True, help="cantidad de clusters a generar")
 
     args = parser.parse_args()
     main(args.matrix_file, args.barcodes_file, args.genes_file)

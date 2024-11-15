@@ -12,6 +12,11 @@ Nuevo_algoritmo/
 └── README.md              # Descripción del proyecto
 
 
+
+
+
+
+
 Para instalar las dependencias en un entorno como un cluster ejecuta el siguiente comando:
 pip install -r requirements.txt
 
