@@ -353,22 +353,22 @@ def apply_pca(hvg_matrix):
 
 
 #---6. Clustering
-# def perform_clustering(data, n_clusters=2):
-#     """
-#     Aplica KMeans para agrupar las células en función de sus perfiles de expresión génica.
+def perform_clustering(data, n_clusters=2):
+    """
+    Aplica KMeans para agrupar las células en función de sus perfiles de expresión génica.
 
-#     Args:
-#         data: matriz de datos reducidos (ej. resultado de PCA)
-#         n_clusters: número de clusters
+    Args:
+        data: matriz de datos reducidos (ej. resultado de PCA)
+        n_clusters: número de clusters
     
-#     Returns:
-#         labels: etiquetas de cluster para cada célula
-#     """
-#     kmeans = KMeans(n_clusters=n_clusters, random_state=0)
-#     labels = kmeans.fit_predict(data)
+    Returns:
+        labels: etiquetas de cluster para cada célula
+    """
+    kmeans = KMeans(n_clusters=n_clusters, random_state=0)
+    labels = kmeans.fit_predict(data)
     
-#     print(f"KMeans completado. Número de clusters: {n_clusters}")
-#     return labels
+    print(f"KMeans completado. Número de clusters: {n_clusters}")
+    return labels
 
 def pearson_distance_matrix(matrix, centers):
     """
@@ -472,6 +472,8 @@ def plot_clusters(pca_result, cluster_labels):
     plt.legend()
     #plt.show()
     plt.savefig("clusters_result.png")
+
+
 
 #--- 9. Guardar resultados
 def save_clustering_results(pca_result, cluster_labels, output_file="clustering_results.csv"):
